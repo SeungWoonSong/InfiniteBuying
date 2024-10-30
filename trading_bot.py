@@ -12,49 +12,45 @@ from config import BotConfig, TradingConfig
 from models import TradingState, StockBalance
 from utils import setup_logging, get_current_time_kst, calculate_single_amount, calculate_loc_price
 from notifications import TelegramNotifier
+import asyncio
 
 class InfiniteBuyingBot:
-    def __init__(self, 
-                 kis: PyKis, 
-                 config: BotConfig,
-                 trading_config: TradingConfig):
+    def __init__(self, kis: PyKis, config: BotConfig, trading_config: TradingConfig):
         """
         무한매수법 봇 초기화
-        
-        Args:
-            kis: PyKis 인스턴스
-            config: 봇 설정
-            trading_config: 매매 설정
         """
         self.kis = kis
         self.config = config
         self.trading_config = trading_config
         self.stock = kis.stock(config.symbol)
-        
+
         # 상태 파일 경로
         self.state_file = config.log_dir / "trading_state.json"
-        
+
         # 상태 초기화 또는 로드
         self.state = self._load_state()
-        
+
         # 로거 설정
         self.logger = setup_logging(config.log_dir, "InfiniteBuyingBot")
-        
+
         # 텔레그램 알림 설정
         self.notifier = TelegramNotifier()
-        
+
         # 일일 리포트 스케줄러 설정
         self.scheduler = BackgroundScheduler()
         self.scheduler.add_job(
             self.send_daily_report,
             trigger='cron',
-            hour=23,  # 23시 50분
+            hour=23,
             minute=50
         )
         self.scheduler.start()
-        
-        self.logger.info(f"Bot initialized - Cycle {self.state.cycle_number}")
-        self.notifier.notify_order(
+        self.logger.info("Daily report scheduler started.")
+
+    async def async_initialize(self):
+        """비동기 봇 초기화"""
+        await self.notifier.initialize()
+        await self.notifier.notify_order(
             "봇 시작",
             self.stock.symbol,
             None,
@@ -103,6 +99,8 @@ class InfiniteBuyingBot:
             balance = self.kis.account().balance()
             deposits = sum(deposit.amount for deposit in balance.deposits.values())
             
+            self.logger.info("Daily report job triggered.")
+
             stocks = []
             for stock in balance.stocks:
                 quote = self.kis.stock(stock.symbol).quote()

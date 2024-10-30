@@ -4,11 +4,12 @@ from pykis import PyKis
 from dotenv import load_dotenv
 from config import BotConfig, TradingConfig  # 이 부분이 누락되었습니다
 from trading_bot import InfiniteBuyingBot
+import asyncio
 
 # 현재 디렉토리에서 .env 파일 로드
 load_dotenv()
 
-def main():
+async def main():
     try:
         # PyKis 인스턴스 생성
         kis = PyKis(
@@ -36,13 +37,14 @@ def main():
             quarter_loss_start=39       # 쿼터손절 시작 회차
         )
     
-        # 봇 생성 및 실행
+        # 봇 생성 및 초기화
         bot = InfiniteBuyingBot(kis, bot_config, trading_config)
-        bot.run()
+        await bot.async_initialize()  # 비동기 초기화 호출
+        bot.run()  # 봇 실행
         
     except Exception as e:
         print(f"Error: {str(e)}")
         raise e
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
