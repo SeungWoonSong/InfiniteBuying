@@ -1,0 +1,5 @@
+APScheduler==3.10.4
+python-dotenv==1.0.1
+python-telegram-bot==21.6
+python_kis==2.0.3
+pytz==2022.1
