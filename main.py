@@ -39,8 +39,8 @@ async def main():
     
         # 봇 생성 및 초기화
         bot = InfiniteBuyingBot(kis, bot_config, trading_config)
-        await bot.async_initialize()  # 비동기 초기화 호출
-        bot.run()  # 봇 실행
+        await bot.async_initialize()
+        await bot.run()  # Changed to await
         
     except Exception as e:
         print(f"Error: {str(e)}")

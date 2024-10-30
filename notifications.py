@@ -34,17 +34,20 @@ class TelegramNotifier:
         await update.message.reply_text("봇이 정상 작동중입니다.")
 
     async def send_notification(self, message: str):
-        """알림 전송"""
+        if not self.application:
+            await self.initialize()
+            
+        if not self.chat_id:
+            raise ValueError("chat_id is not set")
+            
         try:
-            if not self.application:
-                await self.initialize()
             await self.application.bot.send_message(
                 chat_id=self.chat_id,
                 text=message,
                 parse_mode='HTML'
             )
         except Exception as e:
-            logging.error(f"Failed to send telegram notification: {e}")
+            raise  # 예외를 상위로 전파
 
     async def notify_order(self, order_type: str, symbol: str, qty: Optional[Decimal] = None, 
                          price: Optional[float] = None, amount: Optional[float] = None):

@@ -52,3 +52,24 @@ class StockBalance:
     def profit_rate(self) -> float:
         """수익률"""
         return (self.current_price - self.average_price) / self.average_price * 100
+
+@dataclass
+class OrderTracking:
+    order_number: str  # 주문번호
+    symbol: str       # 종목코드
+    type: str        # 매수/매도
+    price: float     # 주문가격 
+    qty: int         # 주문수량
+    executed_qty: int # 체결수량
+    condition: str    # 주문조건
+    time: datetime   # 주문시각
+
+    @property
+    def pending_qty(self) -> int:
+        """미체결 수량"""
+        return self.qty - self.executed_qty
+
+    @property 
+    def is_complete(self) -> bool:
+        """체결 완료 여부"""
+        return self.executed_qty == self.qty
