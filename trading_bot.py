@@ -374,12 +374,14 @@ class InfiniteBuyingBot:
                     close_time = market_hours.close_kst  # 이미 time 객체인 경우
                 
                 # 장 마감 10분 전
-                target_time = time(
-                    hour=close_time.hour,
-                    minute=close_time.minute - 10,
-                    second=0
-                )
-                
+                minute = close_time.minute - 10
+                if minute < 0:
+                    hour = (close_time.hour - 1) % 24
+                    minute += 60
+                else:
+                    hour = close_time.hour
+                target_time = time(hour=hour, minute=minute, second=0)
+
                 current_time = now.time()
                 
                 # 장 마감 10분 전부터 5분 동안
