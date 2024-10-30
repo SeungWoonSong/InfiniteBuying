@@ -94,10 +94,10 @@ class InfiniteBuyingBot:
             self.logger.error(f"Failed to save state: {e}")
 
     def get_balance(self) -> Optional[StockBalance]:
-        """현재 잔고 조회"""
         try:
             balance = self.kis.account().balance()
             stock = balance.stock(self.stock.symbol)
+            self.usd_deposit = balance.deposits['USD'].amount  # USD 예수금 저장
             if stock:
                 return StockBalance(
                     quantity=stock.qty,
@@ -113,7 +113,7 @@ class InfiniteBuyingBot:
         """일일 계좌 현황 리포트 전송"""
         try:
             balance = self.kis.account().balance()
-            deposits = sum(deposit.amount for deposit in balance.deposits.values())
+            deposits = balance.deposits['USD'].amount  
             
             self.logger.info("Daily report job triggered.")
 
@@ -265,7 +265,7 @@ class InfiniteBuyingBot:
                 return
                     
             # 현재 회차에서 사용할 1회 매수금액 계산
-            remaining_capital = self.state.total_investment - balance.total_value
+            remaining_capital = float(self.usd_deposit)
             remaining_turns = self.config.total_divisions - self.state.turn
                 
             if remaining_turns <= 0:

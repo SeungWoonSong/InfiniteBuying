@@ -12,6 +12,7 @@ class TradingState:
     total_investment: float = 0    # 총 투자금
     is_first_buy: bool = True      # 첫 매수 여부
     last_updated: datetime = None  # 마지막 업데이트 시간
+    usd_deposit: float = 0         # USD 예수금 필드 추가
     
     def reset(self):
         """새로운 사이클 시작을 위한 초기화"""
