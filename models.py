@@ -1,5 +1,5 @@
 # models.py
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from decimal import Decimal
 from datetime import datetime
 
@@ -20,6 +20,21 @@ class TradingState:
         self.is_first_buy = True
         self.cycle_number += 1
         self.last_updated = datetime.now()
+
+    def to_dict(self):
+        """객체를 딕셔너리로 변환, JSON 직렬화 가능하게 변환"""
+        data = asdict(self)
+        # datetime 객체를 문자열로 변환
+        if self.last_updated:
+            data['last_updated'] = self.last_updated.isoformat()
+        return data
+
+    @classmethod
+    def from_dict(cls, data):
+        """딕셔너리를 객체로 변환"""
+        if 'last_updated' in data and data['last_updated']:
+            data['last_updated'] = datetime.fromisoformat(data['last_updated'])
+        return cls(**data)
 
 @dataclass
 class StockBalance:

@@ -48,7 +48,7 @@ class InfiniteBuyingBot:
         self.scheduler.add_job(
             self.send_daily_report,
             trigger='cron',
-            hour=22,  # 저녁 10시
+            hour=24,  # 저녁 12시
             minute=0
         )
         self.scheduler.start()
@@ -68,7 +68,7 @@ class InfiniteBuyingBot:
             if self.state_file.exists():
                 with open(self.state_file, 'r') as f:
                     data = json.load(f)
-                    return TradingState(**data)
+                    return TradingState.from_dict(data)
         except Exception as e:
             print(f"Failed to load state: {e}")
         return TradingState()
@@ -77,7 +77,7 @@ class InfiniteBuyingBot:
         """현재 상태 저장"""
         try:
             with open(self.state_file, 'w') as f:
-                json.dump(self.state.__dict__, f)
+                json.dump(self.state.to_dict(), f)
         except Exception as e:
             self.logger.error(f"Failed to save state: {e}")
 

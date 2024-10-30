@@ -224,6 +224,26 @@ class TestInfiniteBuyingBot(unittest.TestCase):
         for amount, price, expected in test_cases:
             qty = bot.calculate_buy_quantity(amount, price)
             self.assertEqual(qty, expected)
+    
+    def test_state_persistence(self):
+        """상태 저장 및 로드 테스트"""
+        mock_kis = MockKis()
+        bot = InfiniteBuyingBot(mock_kis, self.config, self.trading_config)
+        
+        # 상태 변경 후 저장
+        bot.state.cycle_number = 2
+        bot.state.turn = 5
+        bot.state.is_first_buy = False
+        bot._save_state()
+        
+        # 새로운 봇 인스턴스 생성 후 상태 로드
+        new_bot = InfiniteBuyingBot(mock_kis, self.config, self.trading_config)
+        new_bot.state = new_bot._load_state()
+        
+        # 상태 확인
+        self.assertEqual(new_bot.state.cycle_number, 2)
+        self.assertEqual(new_bot.state.turn, 5)
+        self.assertFalse(new_bot.state.is_first_buy)
 
 def run_tests():
     unittest.main()
