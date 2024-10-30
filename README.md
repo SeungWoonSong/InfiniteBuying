@@ -1,128 +1,110 @@
-# Infinite Buying Bot for Stock Trading
+# 주식 매매 봇 프로젝트 - Infinite Buying Bot
 
-This project implements an "Infinite Buying" bot, executing continuous trades based on a set strategy. The bot provides notifications through Telegram, making it easier to monitor trading activity. It leverages `PyKis` for API interactions, allowing users to configure trading parameters and handle errors effectively.
+본 프로젝트는 주식 자동 매매 봇으로, 무한 매수 전략을 기반으로 설계되었습니다. `Infinite Buying Bot`은 Python으로 구현되었으며, 매수 및 매도 로직을 포함하여 자동으로 거래를 수행합니다.
 
-## Table of Contents
+## 파일 구조
+```
+.
+├── README.md
+├── Test
+│   ├── __init__.py
+│   ├── requirements-test.txt
+│   ├── test_notification.py
+│   ├── test_send.py
+│   └── test_trading_bot.py
+├── config.py
+├── main.py
+├── models.py
+├── notifications.py
+├── requirements.txt
+├── trading_bot.py
+├── utils.py
+```
 
-- [Project Structure](#project-structure)
-- [Features](#features)
-- [Setup](#setup)
-- [Configuration](#configuration)
-- [Usage](#usage)
-- [Tests](#tests)
-- [File Descriptions](#file-descriptions)
-- [Logging](#logging)
-- [License](#license)
+> 일부 파일 및 디렉토리는 `.gitignore`에 의해 Git에 포함되지 않습니다:
+```
+*.env
+logs/
+__pycache__
+```
 
-## Project Structure
+## 주요 파일 설명
 
-- **main.py**: Entry point to start the bot.
-- **trading_bot.py**: Core trading logic, including buy/sell functionality, daily reporting, and error handling.
-- **notifications.py**: Sends Telegram notifications for trading actions, balance updates, and errors.
-- **config.py**: Stores configuration details for bot settings.
-- **models.py**: Defines data classes for managing trading state and stock balance.
-- **utils.py**: Utility functions for logging, time retrieval, and price calculations.
-- **test_send.py**, **test_trading_bot.py**, **test_notification.py**: Test files for different parts of the bot.
+### 1. `main.py`
+- 봇 실행의 메인 진입점입니다. PyKis API를 통해 매매 봇을 초기화하고 실행하는 역할을 합니다. `.env` 파일에서 API 키 및 계정 정보를 로드합니다.
+- `InfiniteBuyingBot`을 초기화하고 실행하기 위한 설정(`BotConfig`, `TradingConfig`)을 수행합니다.
 
-## Features
+### 2. `config.py`
+- 봇의 설정을 담고 있는 파일로, `BotConfig`와 `TradingConfig` 클래스가 정의되어 있습니다.
+  - `BotConfig`: 매매할 종목 심볼, 분할 횟수 및 로그 디렉토리를 설정합니다.
+  - `TradingConfig`: 첫 매수 수량, 전반전/후반전 기준, 쿼터손절 시작 회차 등의 매매 설정을 포함합니다.
 
-- **Automated Trading**: Execute orders based on predefined strategies.
-- **Telegram Notifications**: Real-time notifications for trades, errors, and daily summaries.
-- **Configurable Settings**: Easily adjustable parameters for trading and notifications.
-- **Error Logging**: All operations are logged for easier debugging.
+### 3. `models.py`
+- 매매 상태와 주식 잔고 정보를 모델링한 파일입니다.
+  - `TradingState`: 매매 상태를 저장하는 데이터 클래스입니다. 사이클 번호, 회차, 첫 매수 여부 등을 관리하며 새 사이클을 시작할 때 초기화할 수 있습니다.
+  - `StockBalance`: 보유 주식 수량, 평균 단가, 현재가 등을 포함하는 주식 잔고 정보를 관리합니다.
 
-## Setup
+### 4. `notifications.py`
+- 텔레그램 알림 관련 기능을 담당하는 파일입니다.
+  - `TelegramNotifier`: 텔레그램 봇을 통해 매수/매도 알림, 계좌 잔고 알림, 에러 알림을 전송합니다. 비동기 방식으로 구현되어 있으며, 봇 초기화 및 종료, 메시지 전송 기능이 포함되어 있습니다.
 
-### Prerequisites
+### 5. `trading_bot.py`
+- 봇의 핵심 로직이 구현된 파일로, `InfiniteBuyingBot` 클래스가 정의되어 있습니다. PyKis API와 통신하여 매수 및 매도 로직을 수행하며, 매매 상태를 저장 및 로드합니다.
+  - 첫 매수, 전반전/후반전 매매, 매도, 쿼터손절 등의 전략을 수행합니다.
+  - 일일 계좌 현황 리포트를 전송하고 사이클 완료 여부를 체크하는 기능도 포함되어 있습니다.
 
-1. Python 3.8+ is required.
-2. Install necessary packages:
-   ```bash
+### 6. `utils.py`
+- 유틸리티 함수들을 모아놓은 파일로, 로깅 설정, 현재 KST 시간 반환, LOC 주문 가격 계산 등의 기능을 제공합니다.
+
+### 7. `Test`
+- 테스트 관련 파일들이 모여 있는 디렉토리입니다. 각 테스트는 `unittest`를 사용해 작성되었습니다.
+  - `test_notification.py`: 텔레그램 알림 기능의 테스트입니다. 비동기 알림 전송, 잔고 알림, 에러 알림 등을 테스트합니다.
+  - `test_send.py`: `TelegramNotifier`의 알림 기능을 직접 테스트하기 위한 파일입니다.
+  - `test_trading_bot.py`: `InfiniteBuyingBot`의 매매 로직과 상태 관리 기능을 테스트합니다. 매수, 매도, 쿼터손절 등의 시나리오를 모킹(mocking)하여 검증합니다.
+
+## 설치 및 실행 방법
+
+### 요구 사항
+- Python 3.10+
+- `.env` 파일에 PyKis API와 텔레그램 봇의 설정 필요
+
+### 설치
+1. 리포지토리 클론
+   ```sh
+   git clone https://github.com/SeungWoonSong/InfiniteBuying.git
+   cd InfiniteBuying
+   ```
+
+2. 패키지 설치
+   ```sh
    pip install -r requirements.txt
    ```
-3. Set up your environment variables in a `.env` file:
-   ```plaintext
-   TELEGRAM_BOT_TOKEN=<Your_Telegram_Bot_Token>
-   TELEGRAM_MY_ID=<Your_Telegram_Chat_ID>
-   ID=<Your_Trading_ID>
-   ACCOUNT=<Your_Account>
-   KIS_APPKEY=<Your_KIS_App_Key>
-   KIS_SECRETKEY=<Your_KIS_Secret_Key>
-   VIRTUAL_KIS_APPKEY=<Your_Virtual_KIS_App_Key>
-   VIRTUAL_SECRETKEY=<Your_Virtual_KIS_Secret_Key>
+
+3. `.env` 파일 설정
+   - 프로젝트 루트 디렉토리에 `.env` 파일을 생성하고 다음과 같은 내용으로 API 및 계정 정보를 설정합니다.
+   ```
+   ID=사용자_ID
+   ACCOUNT=계정_정보
+   KIS_APPKEY=API_앱키
+   KIS_SECRETKEY=API_시크릿키
+   TELEGRAM_BOT_TOKEN=텔레그램_봇_토큰
+   TELEGRAM_MY_ID=텔레그램_챗_ID
    ```
 
-### Running the Bot
-
-To launch the bot, use:
-```bash
+### 실행
+```sh
 python main.py
 ```
 
-## Configuration
-
-Edit `config.py` for personalized settings:
-- **BotConfig**: Defines the symbol, number of divisions for capital, and log directory.
-- **TradingConfig**: Adjusts trading parameters such as initial buy amount and thresholds.
-
-## Usage
-
-1. **First Buy Execution**: Executes an initial buy based on configuration.
-2. **Normal Trading**: Purchases stocks based on conditions and thresholds.
-3. **Daily Reporting**: Sends a daily summary of account status.
-4. **Error Notifications**: Handles and logs errors, with Telegram alerts for critical issues.
-
-## Tests
-
-Run all tests to ensure functionality:
-```bash
+## 테스트 실행
+```sh
+cd Test
 python -m unittest discover
 ```
 
-### Test Descriptions
+## 주의 사항
+- 주식 거래와 관련된 API를 사용하기 때문에, 테스트나 실제 거래 시 실제 계좌에 영향을 미칠 수 있습니다. 테스트 환경과 실제 환경을 구분하여 진행하시기 바랍니다.
 
-- **test_send.py**: Tests sending various notifications.
-- **test_trading_bot.py**: Validates trading functionalities such as buying, selling, and error handling.
-- **test_notification.py**: Tests the Telegram notification system.
+## 라이선스
+- 본 프로젝트는 MIT 라이선스를 따릅니다.
 
-## File Descriptions
-
-### main.py
-
-Initiates the bot with configurations for trading and notification. Loads environment variables and starts the bot’s main loop.
-
-### trading_bot.py
-
-Contains the main trading logic with buy, sell, and reporting functions.
-
-### notifications.py
-
-Manages Telegram notifications for trade updates, balance summaries, and error alerts.
-
-### config.py
-
-Stores bot and trading configuration classes using `dataclass`.
-
-### models.py
-
-Defines data models for trading states and balance details.
-
-### utils.py
-
-Utility functions for logging setup, time handling, and price calculations.
-
-### test_send.py, test_trading_bot.py, test_notification.py
-
-Unit tests for notifications and bot operations. `test_trading_bot.py` also includes mock objects for isolated testing.
-
-## Logging
-
-All logs are saved in the specified log directory, with each session generating a new log file. Logs include details on trades, errors, and bot operations, aiding in tracking and debugging.
-
-## License
-
-This project is licensed under the MIT License.
-
----
-
-**Important**: Use this bot with caution, especially in live trading environments. Always test in a simulated setting before deploying to a live account.
