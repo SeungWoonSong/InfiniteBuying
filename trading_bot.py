@@ -48,8 +48,8 @@ class InfiniteBuyingBot:
         self.scheduler.add_job(
             self.send_daily_report,
             trigger='cron',
-            hour=24,  # 저녁 12시
-            minute=0
+            hour=23,  # 23시 50분
+            minute=50
         )
         self.scheduler.start()
         
