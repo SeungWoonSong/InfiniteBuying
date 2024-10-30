@@ -41,8 +41,8 @@ class InfiniteBuyingBot:
         self.scheduler.add_job(
             self.send_daily_report,
             trigger='cron',
-            hour=23,
-            minute=50
+            hour=22,
+            minute=30
         )
         self.scheduler.start()
         self.logger.info("Daily report scheduler started.")
