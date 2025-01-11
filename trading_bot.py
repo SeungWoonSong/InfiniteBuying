@@ -1,4 +1,4 @@
-from pykis import PyKis, KisStock
+from pykis import PyKis
 import json
 from datetime import datetime, time, timedelta
 import time as time_module

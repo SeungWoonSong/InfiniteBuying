@@ -14,15 +14,13 @@ class BotConfig(BaseModel):
 
 class TradingConfig(BaseModel):
     """거래 설정"""
-    stock_code: str  # 종목 코드
-    target_price: float  # 목표 매수가
-    quantity: int  # 매수 수량
-    first_buy_amount: float  # 첫 매수금액
-    pre_turn_threshold: float  # 추가 매수 시작 기준 하락률 (%)
-    quarter_loss_start: float  # 1/4 손절 시작 기준 하락률 (%)
-    trading_interval: float  # 매매 주기 (초)
-    max_trades_per_day: int  # 일일 최대 매매 횟수
-    use_real_trading: bool  # 실제 매매 여부
+    initial_amount: float  # 초기 투자금액
+    single_amount: float  # 1회 매수금액
+    min_order_amount: float  # 최소 주문금액
+    loss_cut_rate: float  # 손절률
+    profit_rate: float  # 익절률
+    max_buy_times: int  # 최대 매수 횟수
+    trading_interval: float = 1.0  # 매매 주기 (초)
 
 class ConfigUpdate(BaseModel):
     """설정 업데이트"""

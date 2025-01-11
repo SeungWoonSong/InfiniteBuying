@@ -26,8 +26,10 @@ class BotManager:
         cls._bot_class = bot_class
 
     @classmethod
-    def reset(cls):
+    async def reset(cls):
         """봇 초기화"""
+        if cls._bot is not None:
+            await cls.stop()
         cls._bot = None
         cls._trade_history = []
 
@@ -64,6 +66,13 @@ class BotManager:
     @classmethod
     def get_status(cls) -> bool:
         """봇 상태 조회"""
+        if cls._bot is None:
+            return False
+        return cls._bot.is_running
+
+    @classmethod
+    def is_running(cls) -> bool:
+        """봇 실행 상태 조회"""
         if cls._bot is None:
             return False
         return cls._bot.is_running

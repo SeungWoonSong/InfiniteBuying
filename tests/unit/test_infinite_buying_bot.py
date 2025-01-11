@@ -19,15 +19,13 @@ class TestInfiniteBuyingBot(unittest.TestCase):
             account_code="test"
         )
         self.trading_config = TradingConfig(
-            stock_code="005930",
-            target_price=70000,
-            quantity=10,
-            first_buy_amount=1000000,
-            pre_turn_threshold=20,
-            quarter_loss_start=39,
-            trading_interval=1,
-            max_trades_per_day=10,
-            use_real_trading=False
+            initial_amount=1000000,
+            single_amount=200000,
+            min_order_amount=100000,
+            loss_cut_rate=0.03,
+            profit_rate=0.02,
+            max_buy_times=5,
+            trading_interval=1.0
         )
         self.bot = InfiniteBuyingBot(self.bot_config, self.trading_config)
 
@@ -70,9 +68,9 @@ class TestInfiniteBuyingBot(unittest.TestCase):
             initial_position = self.bot.position_count
 
             # 추가 매수 실행
-            self.bot.current_price = self.bot.average_price * 0.95  # 5% 하락
-            await self.bot._execute_additional_buy()
-            self.assertGreater(self.bot.position_count, initial_position)
+            self.bot.current_price = self.bot.average_price * 0.90  # 10% 하락
+            additional_quantity = await self.bot._execute_additional_buy()
+            self.assertGreater(additional_quantity, 0)
             self.assertEqual(self.bot.current_division, 2)
 
         asyncio.run(run_test())

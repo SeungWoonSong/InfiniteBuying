@@ -14,5 +14,10 @@ app.add_middleware(
 )
 
 # 라우터 등록
-app.include_router(config.router, prefix="")
-app.include_router(trading.router, prefix="/api/trading", tags=["trading"])
+app.include_router(config.router, prefix="/api/v1", tags=["config"])
+app.include_router(trading.router, prefix="/api/v1/trading", tags=["trading"])
+
+@app.get("/api/v1/health")
+async def health_check():
+    """헬스 체크 엔드포인트"""
+    return {"status": "healthy"}

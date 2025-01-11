@@ -41,61 +41,59 @@ class InfiniteBuyingBot(TradingBot):
         if self.position_count > 0:
             return
 
-        quantity = int(self.trading_config.first_buy_amount / self.current_price)
-        if quantity < 1:
-            self.logger.warning("First buy amount is too small")
-            return
-
-        success = await self.kis_api.buy_stock(self.bot_config.symbol, quantity, self.current_price)
-        if success:
-            self.position_count = quantity
-            self.current_division = 1
-            self.average_price = self.current_price
-            self.total_investment = self.current_price * quantity
-            self.last_trade_time = datetime.now()
-            self.logger.info(f"First buy executed: {quantity} shares at {self.current_price}")
+        quantity = int(self.trading_config.single_amount / self.current_price)
+        if quantity > 0:
+            success = await self.kis_api.buy_stock(self.bot_config.symbol, quantity, self.current_price)
+            if success:
+                self.position_count = quantity
+                self.current_division = 1
+                self.average_price = self.current_price
+                self.total_investment = self.current_price * quantity
+                self.last_trade_time = datetime.now()
+                self.logger.info(f"First buy executed: {quantity} shares at {self.current_price}")
 
     async def _execute_additional_buy(self):
         """추가 매수 실행"""
-        if self.position_count == 0:
-            return
+        if not self.position_count > 0:
+            return 0
 
         if self.current_division >= self.bot_config.total_divisions:
-            return
+            return 0
 
         if self.current_price >= self.average_price:
-            return
+            return 0
 
-        quantity = int(self.trading_config.quantity)
-        if quantity < 1:
-            self.logger.warning("Additional buy amount is too small")
-            return
-
-        success = await self.kis_api.buy_stock(self.bot_config.symbol, quantity, self.current_price)
-        if success:
-            self.position_count += quantity
-            self.current_division += 1
-            self.total_investment += self.current_price * quantity
-            self.average_price = self.total_investment / self.position_count
-            self.last_trade_time = datetime.now()
-            self.logger.info(f"Additional buy executed: {quantity} shares at {self.current_price}")
+        drop_rate = (self.average_price - self.current_price) / self.average_price
+        if drop_rate > 0.05:  # 5% 이상 하락 시 추가 매수
+            quantity = int(self.trading_config.single_amount / self.current_price)
+            if quantity > 0:
+                success = await self.kis_api.buy_stock(self.bot_config.symbol, quantity, self.current_price)
+                if success:
+                    self.position_count += quantity
+                    self.current_division += 1
+                    self.total_investment += self.current_price * quantity
+                    self.average_price = self.total_investment / self.position_count
+                    self.last_trade_time = datetime.now()
+                    self.logger.info(f"Additional buy executed: {quantity} shares at {self.current_price}")
+                    return quantity
+        return 0
 
     async def run(self):
         """봇 실행"""
         self.is_running = True
         self.logger.info("Trading bot started")
 
-        while self.is_running:
-            try:
+        try:
+            while self.is_running:
                 await self._update_market_data()
                 await self._execute_first_buy()
                 await self._execute_additional_buy()
                 await asyncio.sleep(self.trading_config.trading_interval)
-            except Exception as e:
-                self.logger.error(f"Error during trading: {e}")
-                self.is_running = False
-
-        self.logger.info("Trading bot stopped")
+        except Exception as e:
+            self.logger.error(f"Error during trading: {e}")
+        finally:
+            self.is_running = False
+            self.logger.info("Trading bot stopped")
 
     async def stop(self):
         """봇 중지"""

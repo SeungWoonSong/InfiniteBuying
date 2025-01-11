@@ -8,7 +8,7 @@ class MockInfiniteBuyingBot(InfiniteBuyingBot):
 
     def __init__(self, bot_config: BotConfig, trading_config: TradingConfig):
         super().__init__(bot_config, trading_config)
-        self.current_price = trading_config.target_price
+        self.current_price = 70000  # 삼성전자 시가
         self.position_count = 0
         self.total_investment = 0
         self.average_price = 0
@@ -21,7 +21,7 @@ class MockInfiniteBuyingBot(InfiniteBuyingBot):
     async def _execute_first_buy(self):
         """첫 매수 실행 - 모의 거래"""
         if self.position_count == 0:
-            quantity = self.trading_config.first_buy_amount // self.current_price
+            quantity = int(self.trading_config.single_amount / self.current_price)
             self.position_count = quantity
             self.total_investment = quantity * self.current_price
             self.average_price = self.current_price
@@ -30,13 +30,26 @@ class MockInfiniteBuyingBot(InfiniteBuyingBot):
 
     async def _execute_additional_buy(self):
         """추가 매수 실행 - 모의 거래"""
-        if self.current_division > 0 and self.current_price < self.average_price * 0.95:
-            quantity = self.trading_config.quantity
-            self.position_count += quantity
-            self.total_investment += quantity * self.current_price
-            self.current_division += 1
-            self.average_price = self.total_investment / self.position_count
-            self.logger.info(f"Additional buy executed: {quantity} shares at {self.current_price}")
+        if not self.position_count > 0:
+            return 0
+
+        if self.current_division >= self.bot_config.total_divisions:
+            return 0
+
+        if self.current_price >= self.average_price:
+            return 0
+
+        drop_rate = (self.average_price - self.current_price) / self.average_price
+        if drop_rate > 0.05:  # 5% 이상 하락 시 추가 매수
+            quantity = int(self.trading_config.single_amount / self.current_price)
+            if quantity > 0:
+                self.position_count += quantity
+                self.total_investment += quantity * self.current_price
+                self.current_division += 1
+                self.average_price = self.total_investment / self.position_count
+                self.logger.info(f"Additional buy executed: {quantity} shares at {self.current_price}")
+                return quantity
+        return 0
 
     async def run(self):
         """테스트용 봇 실행"""
