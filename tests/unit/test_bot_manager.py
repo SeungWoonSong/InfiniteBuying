@@ -1,8 +1,9 @@
+"""BotManager 단위 테스트"""
 import unittest
 import asyncio
 from trading.bot_manager import BotManager
 from trading.config import BotConfig, TradingConfig
-from trading.mock_bot import MockInfiniteBuyingBot
+from tests.mocks.mock_bot import MockInfiniteBuyingBot
 
 class TestBotManager(unittest.TestCase):
     """봇 관리자 테스트"""
@@ -75,6 +76,3 @@ class TestBotManager(unittest.TestCase):
             self.assertFalse(self.bot_manager.get_status())
 
         asyncio.run(run_lifecycle_test())
-
-if __name__ == '__main__':
-    unittest.main()

@@ -1,3 +1,4 @@
+"""InfiniteBuyingBot 단위 테스트"""
 import unittest
 import asyncio
 from trading.infinite_buying_bot import InfiniteBuyingBot
@@ -90,6 +91,3 @@ class TestInfiniteBuyingBot(unittest.TestCase):
             self.assertFalse(self.bot.is_running)
 
         asyncio.run(run_test())
-
-if __name__ == '__main__':
-    unittest.main()

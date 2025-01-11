@@ -1,35 +1,31 @@
+version: '3'
 services:
   backend:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
-      args:
-        BUILDKIT_INLINE_CACHE: 1
+    build: .
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/app
+      - ./backend:/app/backend
       - ./trading:/app/trading
       - ./logs:/app/logs
+      - ./tests:/app/tests
     env_file:
       - .env
+    environment:
+      - PYTHONPATH=/app
+    command: uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
     networks:
       - app-network
     restart: unless-stopped
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        BUILDKIT_INLINE_CACHE: 1
+    build: ./frontend
     ports:
-      - "5173:5173"
+      - "3000:3000"
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    environment:
-      - VITE_API_URL=http://localhost:8000
+    command: npm start
     networks:
       - app-network
     restart: unless-stopped
