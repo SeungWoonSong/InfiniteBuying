@@ -98,6 +98,97 @@ __pycache__
 python main.py
 ```
 
+## Docker Compose로 실행하기
+
+### 요구사항
+- Docker
+- Docker Compose
+
+### 설치 및 실행 방법
+
+1. 리포지토리 클론
+   ```sh
+   git clone https://github.com/SeungWoonSong/InfiniteBuying.git
+   cd InfiniteBuying
+   ```
+
+2. 환경 변수 설정
+   - `.env` 파일을 프로젝트 루트 디렉토리에 생성하고 다음과 같이 설정합니다:
+   ```env
+   # 한국투자증권 API 설정
+   ID=사용자_ID
+   ACCOUNT=계정_정보
+   KIS_APPKEY=API_앱키
+   KIS_SECRETKEY=API_시크릿키
+   
+   # 텔레그램 봇 설정
+   TELEGRAM_BOT_TOKEN=텔레그램_봇_토큰
+   TELEGRAM_MY_ID=텔레그램_챗_ID
+   ```
+
+3. Docker Compose로 서비스 실행
+   ```sh
+   # 서비스 빌드 및 시작
+   docker-compose up -d --build
+   
+   # 로그 확인
+   docker-compose logs -f
+   
+   # 특정 서비스의 로그만 확인
+   docker-compose logs -f backend  # 백엔드 로그
+   docker-compose logs -f frontend # 프론트엔드 로그
+   ```
+
+4. 웹 인터페이스 접속
+   - 브라우저에서 `http://localhost:5173` 접속
+   - 트레이딩 봇 설정, 시작/중지, 상태 확인 등이 가능합니다
+
+5. 서비스 중지
+   ```sh
+   # 서비스 중지
+   docker-compose down
+   
+   # 컨테이너와 이미지 모두 삭제
+   docker-compose down --rmi all
+   ```
+
+### 서비스 구조
+- **Backend (FastAPI)**
+  - 포트: 8000
+  - API 엔드포인트: `http://localhost:8000`
+  - 트레이딩 봇 로직 및 API 처리
+
+- **Frontend (React + Vite)**
+  - 포트: 5173
+  - URL: `http://localhost:5173`
+  - 웹 기반 사용자 인터페이스
+
+### 문제 해결
+1. 컨테이너가 시작되지 않는 경우
+   ```sh
+   # 로그 확인
+   docker-compose logs
+   
+   # 컨테이너 상태 확인
+   docker-compose ps
+   ```
+
+2. 프론트엔드에서 백엔드 API에 연결할 수 없는 경우
+   - 백엔드 서비스가 정상적으로 실행 중인지 확인
+   - `.env` 파일에서 `VITE_API_URL`이 올바르게 설정되었는지 확인
+
+3. 변경사항이 반영되지 않는 경우
+   ```sh
+   # 캐시를 제거하고 다시 빌드
+   docker-compose build --no-cache
+   docker-compose up -d
+   ```
+
+### 개발 모드에서의 변경사항 반영
+- 소스 코드를 수정하면 자동으로 변경사항이 반영됩니다
+- 프론트엔드는 Hot Module Replacement (HMR)를 지원하여 실시간으로 변경사항이 반영됩니다
+- 백엔드는 자동 리로드 기능이 활성화되어 있어 Python 파일 변경 시 자동으로 서버가 재시작됩니다
+
 ## 테스트 실행
 ```sh
 cd Test
@@ -109,4 +200,3 @@ python -m unittest discover
 
 ## 라이선스
 - 본 프로젝트는 MIT 라이선스를 따릅니다.
-
