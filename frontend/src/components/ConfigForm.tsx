@@ -57,88 +57,135 @@ export const ConfigForm: React.FC = () => {
     }
   };
 
-  const handleBotControl = async () => {
+  const handleStartBot = async () => {
     try {
-      await axios.post(`${API_BASE_URL}/${config.is_running ? 'stop' : 'start'}`);
-      setConfig(prev => ({ ...prev, is_running: !prev.is_running }));
+      await axios.post(`${API_BASE_URL}/config/start`);
+      await fetchConfig();
     } catch (error) {
-      console.error('Failed to control bot:', error);
-      alert('Failed to control bot');
+      console.error('Failed to start bot:', error);
     }
   };
 
+  const handleStopBot = async () => {
+    try {
+      await axios.post(`${API_BASE_URL}/config/stop`);
+      await fetchConfig();
+    } catch (error) {
+      console.error('Failed to stop bot:', error);
+    }
+  };
+
+  const handleResetBot = async () => {
+    try {
+      await axios.post(`${API_BASE_URL}/config/reset`);
+      await fetchConfig();
+    } catch (error) {
+      console.error('Failed to reset bot:', error);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfig({ ...config, [e.target.name]: e.target.type === 'number' ? Number(e.target.value) : e.target.value });
+  };
+
   return (
-    <Paper elevation={3} sx={{ p: 3, maxWidth: 600, mx: 'auto', mt: 4 }}>
-      <Typography variant="h5" gutterBottom>
+    <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+      <Typography variant="h6" gutterBottom>
         Trading Bot Configuration
       </Typography>
       <form onSubmit={handleSubmit}>
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
               label="Symbol"
+              name="symbol"
               value={config.symbol}
-              onChange={(e) => setConfig({ ...config, symbol: e.target.value })}
+              onChange={handleChange}
+              required
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
               type="number"
               label="Total Divisions"
+              name="total_divisions"
               value={config.total_divisions}
-              onChange={(e) => setConfig({ ...config, total_divisions: Number(e.target.value) })}
+              onChange={handleChange}
+              required
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
               type="number"
               label="First Buy Amount"
+              name="first_buy_amount"
               value={config.first_buy_amount}
-              onChange={(e) => setConfig({ ...config, first_buy_amount: Number(e.target.value) })}
+              onChange={handleChange}
+              required
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
               type="number"
-              label="Pre Turn Threshold"
+              label="Pre-turn Threshold"
+              name="pre_turn_threshold"
               value={config.pre_turn_threshold}
-              onChange={(e) => setConfig({ ...config, pre_turn_threshold: Number(e.target.value) })}
+              onChange={handleChange}
+              required
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
               type="number"
               label="Quarter Loss Start"
+              name="quarter_loss_start"
               value={config.quarter_loss_start}
-              onChange={(e) => setConfig({ ...config, quarter_loss_start: Number(e.target.value) })}
+              onChange={handleChange}
+              required
             />
           </Grid>
           <Grid item xs={12}>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={config.is_running}
-                  onChange={handleBotControl}
-                  color="primary"
-                />
-              }
-              label={config.is_running ? "Bot Running" : "Bot Stopped"}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              fullWidth
-            >
-              Save Configuration
-            </Button>
+            <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+              <Button
+                variant="contained"
+                color="primary"
+                type="submit"
+                disabled={config.is_running}
+              >
+                Save Configuration
+              </Button>
+              {config.is_running ? (
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={handleStopBot}
+                >
+                  Stop Bot
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    variant="contained"
+                    color="success"
+                    onClick={handleStartBot}
+                  >
+                    Start Bot
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="warning"
+                    onClick={handleResetBot}
+                  >
+                    Reset Bot
+                  </Button>
+                </>
+              )}
+            </Box>
           </Grid>
         </Grid>
       </form>

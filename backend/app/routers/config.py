@@ -1,69 +1,55 @@
 from fastapi import APIRouter, HTTPException
-from ..schemas.config import TradingConfigUpdate, TradingConfigResponse
-import json
-from pathlib import Path
 from trading.bot_manager import bot_manager
-from trading.config import BotConfig, TradingConfig
+from trading.config import ConfigUpdate
 
 router = APIRouter()
 
-CONFIG_FILE = Path("trading/config.json")
+@router.get("/health")
+async def health_check():
+    """헬스 체크 엔드포인트"""
+    return {"status": "ok"}
 
-def load_config():
-    if not CONFIG_FILE.exists():
-        return {
-            "symbol": "TQQQ",
-            "total_divisions": 40,
-            "first_buy_amount": 1,
-            "pre_turn_threshold": 20,
-            "quarter_loss_start": 39,
-            "is_running": False
-        }
-    return json.loads(CONFIG_FILE.read_text())
-
-def save_config(config: dict):
-    CONFIG_FILE.write_text(json.dumps(config, indent=2))
-
-@router.get("/config", response_model=TradingConfigResponse)
+@router.get("/config")
 async def get_config():
-    return load_config()
+    """설정 조회 엔드포인트"""
+    return {
+        "bot_config": bot_manager._bot.bot_config if bot_manager._bot else None,
+        "trading_config": bot_manager._bot.trading_config if bot_manager._bot else None
+    }
 
-@router.post("/config", response_model=TradingConfigResponse)
-async def update_config(config: TradingConfigUpdate):
-    current_config = load_config()
-    new_config = {**current_config, **config.dict()}
-    save_config(new_config)
-    
-    # 봇 설정 업데이트
-    bot_config = BotConfig(
-        symbol=new_config["symbol"],
-        total_divisions=new_config["total_divisions"],
-        log_dir=Path("logs")
-    )
-    
-    trading_config = TradingConfig(
-        first_buy_amount=new_config["first_buy_amount"],
-        pre_turn_threshold=new_config["pre_turn_threshold"],
-        quarter_loss_start=new_config["quarter_loss_start"]
-    )
-    
-    await bot_manager.initialize_bot(bot_config, trading_config)
-    return new_config
+@router.post("/config")
+async def update_config(config: ConfigUpdate):
+    """설정 업데이트 엔드포인트"""
+    if bot_manager.get_status():
+        raise HTTPException(status_code=400, detail="Bot is running")
+    await bot_manager.initialize_bot(config.bot_config, config.trading_config)
+    return {"success": True}
 
-@router.post("/start")
+@router.post("/config/start")
 async def start_bot():
-    config = load_config()
-    if await bot_manager.start_bot():
-        config["is_running"] = True
-        save_config(config)
-        return {"status": "Bot started"}
-    raise HTTPException(status_code=400, detail="Failed to start bot")
+    """봇 시작 엔드포인트"""
+    if bot_manager._bot is None:
+        raise HTTPException(status_code=400, detail="Bot not initialized")
+    await bot_manager.start()
+    return {"success": True}
 
-@router.post("/stop")
+@router.post("/config/stop")
 async def stop_bot():
-    config = load_config()
-    if await bot_manager.stop_bot():
-        config["is_running"] = False
-        save_config(config)
-        return {"status": "Bot stopped"}
-    raise HTTPException(status_code=400, detail="Failed to stop bot")
+    """봇 중지 엔드포인트"""
+    if bot_manager._bot is None:
+        raise HTTPException(status_code=400, detail="Bot not initialized")
+    await bot_manager.stop()
+    return {"success": True}
+
+@router.post("/config/reset")
+async def reset_bot():
+    """봇 초기화 엔드포인트"""
+    if bot_manager._bot is not None:
+        await bot_manager.stop()
+    bot_manager.reset()
+    return {"success": True}
+
+@router.get("/config/status")
+async def get_status():
+    """봇 상태 조회 엔드포인트"""
+    return {"is_running": bot_manager.get_status()}

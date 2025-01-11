@@ -3,12 +3,31 @@ from .config import BotConfig, TradingConfig
 import logging
 from datetime import datetime
 import asyncio
+from abc import ABC, abstractmethod
 
-class InfiniteBuyingBot:
+class TradingBot(ABC):
+    """트레이딩 봇 기본 클래스"""
+
+    @abstractmethod
+    def __init__(self, bot_config: BotConfig, trading_config: TradingConfig):
+        """봇 초기화"""
+        pass
+
+    @abstractmethod
+    async def run(self):
+        """봇 실행"""
+        pass
+
+    @abstractmethod
+    async def stop(self):
+        """봇 중지"""
+        pass
+
+
+class InfiniteBuyingBot(TradingBot):
     def __init__(self, kis: PyKis, bot_config: BotConfig, trading_config: TradingConfig):
+        super().__init__(bot_config, trading_config)
         self.kis = kis
-        self.bot_config = bot_config
-        self.trading_config = trading_config
         self.trades_today = 0
         self.last_trade_time = None
         self.is_running = False
@@ -30,7 +49,7 @@ class InfiniteBuyingBot:
         ch.setFormatter(formatter)
         self.logger.addHandler(ch)
 
-    async def start(self):
+    async def run(self):
         """트레이딩 시작"""
         self.is_running = True
         self.logger.info("Trading bot started")
@@ -43,7 +62,7 @@ class InfiniteBuyingBot:
             
             await asyncio.sleep(self.trading_config.trading_interval)
 
-    def stop(self):
+    async def stop(self):
         """트레이딩 중지"""
         self.is_running = False
         self.logger.info("Trading bot stopped")

@@ -103,6 +103,8 @@ python main.py
 ### 요구사항
 - Docker
 - Docker Compose
+- 한국투자증권 계정 (실전 및 모의투자)
+- 텔레그램 봇 토큰 및 채팅 ID
 
 ### 설치 및 실행 방법
 
@@ -113,81 +115,64 @@ python main.py
    ```
 
 2. 환경 변수 설정
-   - `.env` 파일을 프로젝트 루트 디렉토리에 생성하고 다음과 같이 설정합니다:
+   - `.env` 파일을 프로젝트 루트 디렉토리에 생성하고 다음 정보를 **모두** 입력해야 합니다:
    ```env
-   # 한국투자증권 API 설정
-   ID=사용자_ID
-   ACCOUNT=계정_정보
-   KIS_APPKEY=API_앱키
-   KIS_SECRETKEY=API_시크릿키
+   # 한국투자증권 실전 API 설정
+   ID=사용자_ID                    # 필수: 한국투자증권 ID
+   ACCOUNT=계정_정보              # 필수: 계좌번호 앞 8자리
+   KIS_APPKEY=실전_API_앱키       # 필수: 한국투자증권 실전 API 앱키
+   KIS_SECRETKEY=실전_API_시크릿키 # 필수: 한국투자증권 실전 API 시크릿키
+   
+   # 한국투자증권 모의투자 API 설정
+   VIRTUAL_KIS_APPKEY=모의투자_API_앱키       # 필수: 모의투자 API 앱키
+   VIRTUAL_KIS_SECRETKEY=모의투자_API_시크릿키 # 필수: 모의투자 API 시크릿키
    
    # 텔레그램 봇 설정
-   TELEGRAM_BOT_TOKEN=텔레그램_봇_토큰
-   TELEGRAM_MY_ID=텔레그램_챗_ID
+   TELEGRAM_BOT_TOKEN=텔레그램_봇_토큰  # 필수: 텔레그램 봇 토큰
+   TELEGRAM_MY_ID=텔레그램_챗_ID       # 필수: 텔레그램 채팅 ID
    ```
 
 3. Docker Compose로 서비스 실행
    ```sh
    # 서비스 빌드 및 시작
    docker-compose up -d --build
-   
-   # 로그 확인
-   docker-compose logs -f
-   
-   # 특정 서비스의 로그만 확인
-   docker-compose logs -f backend  # 백엔드 로그
-   docker-compose logs -f frontend # 프론트엔드 로그
    ```
 
-4. 웹 인터페이스 접속
+4. 웹 인터페이스 사용하기
    - 브라우저에서 `http://localhost:5173` 접속
-   - 트레이딩 봇 설정, 시작/중지, 상태 확인 등이 가능합니다
+   
+   a) 봇 설정하기
+      - 매매할 종목 선택 (예: 005930 삼성전자)
+      - 분할 매수 횟수 설정
+      - 첫 매수 수량 입력
+      - 전반전/후반전 기준 설정
+      - 쿼터손절 시작 회차 설정
+   
+   b) 봇 제어하기
+      - Start: 설정된 내용으로 봇 시작 (한 번에 하나의 봇만 실행 가능)
+      - Stop: 현재 실행 중인 봇 중지
+      - Reset: 봇 초기화 (거래 기록 초기화)
+   
+   c) 상태 확인
+      - 현재 설정값 확인
+      - 예상 매매 동작 확인
+      - 실시간 거래 내역 확인
+   
+   d) 설정 변경
+      - Stop 버튼으로 봇 중지
+      - 새로운 설정 입력
+      - Start 버튼으로 봇 재시작
 
-5. 서비스 중지
+5. 거래 내역 확인
+   - 웹 인터페이스 하단에서 모든 거래 내역 확인 가능
+   - 주문 시간, 종목, 매수/매도 여부, 수량, 가격 등 상세 정보 제공
+   - 텔레그램으로도 실시간 알림 발송
+
+6. 서비스 중지
    ```sh
    # 서비스 중지
    docker-compose down
-   
-   # 컨테이너와 이미지 모두 삭제
-   docker-compose down --rmi all
    ```
-
-### 서비스 구조
-- **Backend (FastAPI)**
-  - 포트: 8000
-  - API 엔드포인트: `http://localhost:8000`
-  - 트레이딩 봇 로직 및 API 처리
-
-- **Frontend (React + Vite)**
-  - 포트: 5173
-  - URL: `http://localhost:5173`
-  - 웹 기반 사용자 인터페이스
-
-### 문제 해결
-1. 컨테이너가 시작되지 않는 경우
-   ```sh
-   # 로그 확인
-   docker-compose logs
-   
-   # 컨테이너 상태 확인
-   docker-compose ps
-   ```
-
-2. 프론트엔드에서 백엔드 API에 연결할 수 없는 경우
-   - 백엔드 서비스가 정상적으로 실행 중인지 확인
-   - `.env` 파일에서 `VITE_API_URL`이 올바르게 설정되었는지 확인
-
-3. 변경사항이 반영되지 않는 경우
-   ```sh
-   # 캐시를 제거하고 다시 빌드
-   docker-compose build --no-cache
-   docker-compose up -d
-   ```
-
-### 개발 모드에서의 변경사항 반영
-- 소스 코드를 수정하면 자동으로 변경사항이 반영됩니다
-- 프론트엔드는 Hot Module Replacement (HMR)를 지원하여 실시간으로 변경사항이 반영됩니다
-- 백엔드는 자동 리로드 기능이 활성화되어 있어 Python 파일 변경 시 자동으로 서버가 재시작됩니다
 
 ## 테스트 실행
 ```sh

@@ -1,0 +1,8 @@
+{
+  "symbol": "TQQQ",
+  "total_divisions": 40,
+  "first_buy_amount": 1.0,
+  "pre_turn_threshold": 20,
+  "quarter_loss_start": 39.0,
+  "is_running": false
+}
