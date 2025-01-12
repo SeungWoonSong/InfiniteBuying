@@ -1,5 +1,5 @@
 from typing import Optional
-from trading.config import BotConfig
+from .config import BotConfig
 
 class KisAPI:
     """한국투자증권 API 클래스"""

@@ -1,7 +1,7 @@
 """Mock classes for testing"""
+from backend.app.trading.infinite_buying_bot import InfiniteBuyingBot
+from backend.app.trading.config import BotConfig, TradingConfig
 import asyncio
-from trading.infinite_buying_bot import InfiniteBuyingBot
-from trading.config import BotConfig, TradingConfig
 
 class MockInfiniteBuyingBot(InfiniteBuyingBot):
     """테스트용 무한매수 봇"""

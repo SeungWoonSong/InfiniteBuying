@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = 'http://localhost:8000';
 
 interface Trade {
   timestamp: string;
@@ -29,6 +29,7 @@ export const TradeHistory: React.FC = () => {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchHistory = async () => {
     try {
@@ -38,9 +39,17 @@ export const TradeHistory: React.FC = () => {
           offset: page * rowsPerPage,
         },
       });
-      setTrades(response.data);
+      if (response.data) {
+        setTrades(response.data);
+        setError(null);
+      } else {
+        setTrades([]);
+        setError('Invalid response format');
+      }
     } catch (error) {
       console.error('Failed to fetch trade history:', error);
+      setTrades([]);
+      setError(error instanceof Error ? error.message : 'Failed to fetch history');
     }
   };
 
@@ -57,13 +66,21 @@ export const TradeHistory: React.FC = () => {
     setPage(0);
   };
 
+  if (error) {
+    return (
+      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+        <Typography color="error">Error: {error}</Typography>
+      </Paper>
+    );
+  }
+
   return (
-    <Paper elevation={3} sx={{ p: 3 }}>
+    <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
       <Typography variant="h6" gutterBottom>
         Trade History
       </Typography>
       <TableContainer>
-        <Table size="small">
+        <Table>
           <TableHead>
             <TableRow>
               <TableCell>Time</TableCell>
@@ -71,16 +88,14 @@ export const TradeHistory: React.FC = () => {
               <TableCell>Action</TableCell>
               <TableCell align="right">Price</TableCell>
               <TableCell align="right">Quantity</TableCell>
-              <TableCell align="center">Division</TableCell>
-              <TableCell align="right">Total</TableCell>
+              <TableCell align="right">Division</TableCell>
+              <TableCell align="right">Total Amount</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {trades.map((trade, index) => (
               <TableRow key={index}>
-                <TableCell>
-                  {new Date(trade.timestamp).toLocaleString()}
-                </TableCell>
+                <TableCell>{new Date(trade.timestamp).toLocaleString()}</TableCell>
                 <TableCell>{trade.symbol}</TableCell>
                 <TableCell>
                   <Chip
@@ -89,22 +104,10 @@ export const TradeHistory: React.FC = () => {
                     size="small"
                   />
                 </TableCell>
-                <TableCell align="right">
-                  ${trade.price.toFixed(2)}
-                </TableCell>
-                <TableCell align="right">
-                  {trade.quantity}
-                </TableCell>
-                <TableCell align="center">
-                  <Chip
-                    label={`${trade.division}회차`}
-                    color="primary"
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell align="right">
-                  ${trade.total_amount.toFixed(2)}
-                </TableCell>
+                <TableCell align="right">${trade.price.toFixed(2)}</TableCell>
+                <TableCell align="right">{trade.quantity}</TableCell>
+                <TableCell align="right">{trade.division}</TableCell>
+                <TableCell align="right">${trade.total_amount.toFixed(2)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -117,7 +120,7 @@ export const TradeHistory: React.FC = () => {
         page={page}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
-        rowsPerPageOptions={[5, 10, 25, 50]}
+        rowsPerPageOptions={[5, 10, 25]}
       />
     </Paper>
   );

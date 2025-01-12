@@ -64,11 +64,25 @@ class BotManager:
             await cls._bot.stop()
 
     @classmethod
-    def get_status(cls) -> bool:
+    def get_status(cls) -> Dict:
         """봇 상태 조회"""
         if cls._bot is None:
-            return False
-        return cls._bot.is_running
+            return {
+                "current_price": 0,
+                "position_count": 0,
+                "average_price": 0,
+                "total_investment": 0,
+                "current_division": 0,
+                "is_running": False
+            }
+        return {
+            "current_price": cls._bot.current_price,
+            "position_count": cls._bot.position_count,
+            "average_price": cls._bot.average_price,
+            "total_investment": cls._bot.total_investment,
+            "current_division": cls._bot.current_division,
+            "is_running": cls._bot.is_running
+        }
 
     @classmethod
     def is_running(cls) -> bool:
@@ -76,5 +90,10 @@ class BotManager:
         if cls._bot is None:
             return False
         return cls._bot.is_running
+
+    @classmethod
+    def update_config(cls, bot_config: BotConfig, trading_config: TradingConfig):
+        """봇 설정 업데이트"""
+        asyncio.create_task(cls.initialize_bot(bot_config, trading_config))
 
 bot_manager = BotManager()

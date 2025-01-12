@@ -1,16 +1,15 @@
 from pydantic import BaseModel
 
-class TradingConfigUpdate(BaseModel):
+class BotConfig(BaseModel):
+    is_running: bool = False
+
+class TradingConfig(BaseModel):
     symbol: str
     total_divisions: int
     first_buy_amount: float
     pre_turn_threshold: int
     quarter_loss_start: float
 
-class TradingConfigResponse(BaseModel):
-    symbol: str
-    total_divisions: int
-    first_buy_amount: float
-    pre_turn_threshold: int
-    quarter_loss_start: float
-    is_running: bool
+class ConfigUpdate(BaseModel):
+    bot_config: BotConfig
+    trading_config: TradingConfig

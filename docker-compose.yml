@@ -6,9 +6,8 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app/backend
-      - ./trading:/app/trading
-      - ./logs:/app/logs
       - ./tests:/app/tests
+      - ./logs:/app/logs
     env_file:
       - .env
     environment:

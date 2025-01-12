@@ -8,7 +8,7 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = 'http://localhost:8000';
 
 interface TradingStatus {
   current_price: number;
@@ -20,15 +20,29 @@ interface TradingStatus {
   last_updated: string;
 }
 
+interface TradingStatusResponse {
+  status: TradingStatus;
+  recent_trades: any[];  // TODO: Add proper type
+}
+
 export const TradingStatus: React.FC = () => {
   const [status, setStatus] = useState<TradingStatus | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchStatus = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/trading/status`);
-      setStatus(response.data.status);
+      const response = await axios.get<TradingStatusResponse>(`${API_BASE_URL}/trading/status`);
+      if (response.data && response.data.status) {
+        setStatus(response.data.status);
+        setError(null);
+      } else {
+        setStatus(null);
+        setError('Invalid response format');
+      }
     } catch (error) {
       console.error('Failed to fetch trading status:', error);
+      setStatus(null);
+      setError(error instanceof Error ? error.message : 'Failed to fetch status');
     }
   };
 
@@ -38,7 +52,21 @@ export const TradingStatus: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  if (!status) return null;
+  if (error) {
+    return (
+      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+        <Typography color="error">Error: {error}</Typography>
+      </Paper>
+    );
+  }
+
+  if (!status) {
+    return (
+      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+        <Typography>Loading trading status...</Typography>
+      </Paper>
+    );
+  }
 
   return (
     <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
@@ -104,17 +132,22 @@ export const TradingStatus: React.FC = () => {
             <Typography variant="body2" color="text.secondary">
               Current Division
             </Typography>
-            <Chip
-              label={`${status.current_division}회차`}
-              color="primary"
-              size="small"
-            />
+            <Typography variant="h6">
+              {status.current_division}
+            </Typography>
+          </Box>
+        </Grid>
+        <Grid item xs={6} md={4}>
+          <Box>
+            <Typography variant="body2" color="text.secondary">
+              Last Updated
+            </Typography>
+            <Typography variant="h6">
+              {status.last_updated}
+            </Typography>
           </Box>
         </Grid>
       </Grid>
-      <Typography variant="caption" display="block" sx={{ mt: 2, textAlign: 'right' }}>
-        Last updated: {new Date(status.last_updated).toLocaleString()}
-      </Typography>
     </Paper>
   );
 };

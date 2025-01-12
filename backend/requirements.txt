@@ -1,8 +1,9 @@
-fastapi>=0.104.1
-uvicorn[standard]>=0.24.0
-pydantic>=2.4.2
-python-dotenv>=1.0.0
-sqlalchemy>=2.0.23
-APScheduler>=3.10.4
-python-telegram-bot>=21.6
-python_kis>=1.0.6
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.4.2
+python-dotenv==1.0.0
+sqlalchemy==2.0.23
+APScheduler==3.10.4
+python-telegram-bot==21.6
+aiohttp==3.9.1
+pandas==2.1.3

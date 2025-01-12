@@ -1,6 +1,6 @@
 """봇 기본 클래스"""
 from abc import ABC, abstractmethod
-from trading.config import BotConfig, TradingConfig
+from .config import BotConfig, TradingConfig
 
 class TradingBot(ABC):
     """봇 기본 클래스"""
@@ -15,3 +15,7 @@ class TradingBot(ABC):
     async def run(self):
         """봇 실행"""
         pass
+
+    async def stop(self):
+        """봇 중지"""
+        self.is_running = False

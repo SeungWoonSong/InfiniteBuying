@@ -1,6 +1,6 @@
-from trading.bot import TradingBot
-from trading.kis import KisAPI
-from trading.config import BotConfig, TradingConfig
+from .bot import TradingBot
+from .kis import KisAPI
+from .config import BotConfig, TradingConfig
 import logging
 import asyncio
 import os
@@ -41,7 +41,7 @@ class InfiniteBuyingBot(TradingBot):
         if self.position_count > 0:
             return
 
-        quantity = int(self.trading_config.single_amount / self.current_price)
+        quantity = int(self.trading_config.first_buy_amount / self.current_price)
         if quantity > 0:
             success = await self.kis_api.buy_stock(self.bot_config.symbol, quantity, self.current_price)
             if success:
@@ -49,52 +49,43 @@ class InfiniteBuyingBot(TradingBot):
                 self.current_division = 1
                 self.average_price = self.current_price
                 self.total_investment = self.current_price * quantity
-                self.last_trade_time = datetime.now()
                 self.logger.info(f"First buy executed: {quantity} shares at {self.current_price}")
 
     async def _execute_additional_buy(self):
         """추가 매수 실행"""
-        if not self.position_count > 0:
-            return 0
+        if self.current_division >= self.trading_config.total_divisions:
+            return
 
-        if self.current_division >= self.bot_config.total_divisions:
-            return 0
-
+        # 현재가가 평균단가보다 낮은지 확인
         if self.current_price >= self.average_price:
-            return 0
+            return
 
-        drop_rate = (self.average_price - self.current_price) / self.average_price
-        if drop_rate > 0.05:  # 5% 이상 하락 시 추가 매수
-            quantity = int(self.trading_config.single_amount / self.current_price)
-            if quantity > 0:
-                success = await self.kis_api.buy_stock(self.bot_config.symbol, quantity, self.current_price)
-                if success:
-                    self.position_count += quantity
-                    self.current_division += 1
-                    self.total_investment += self.current_price * quantity
-                    self.average_price = self.total_investment / self.position_count
-                    self.last_trade_time = datetime.now()
-                    self.logger.info(f"Additional buy executed: {quantity} shares at {self.current_price}")
-                    return quantity
-        return 0
+        # 매수 수량 계산
+        amount = self.trading_config.first_buy_amount * (2 ** self.current_division)
+        quantity = int(amount / self.current_price)
+
+        if quantity > 0:
+            success = await self.kis_api.buy_stock(self.bot_config.symbol, quantity, self.current_price)
+            if success:
+                self.position_count += quantity
+                self.current_division += 1
+                self.total_investment += self.current_price * quantity
+                self.average_price = self.total_investment / self.position_count
+                self.logger.info(f"Additional buy executed: {quantity} shares at {self.current_price}")
 
     async def run(self):
         """봇 실행"""
         self.is_running = True
-        self.logger.info("Trading bot started")
+        self.logger.info("Bot started")
 
-        try:
-            while self.is_running:
+        while self.is_running:
+            try:
                 await self._update_market_data()
                 await self._execute_first_buy()
                 await self._execute_additional_buy()
-                await asyncio.sleep(self.trading_config.trading_interval)
-        except Exception as e:
-            self.logger.error(f"Error during trading: {e}")
-        finally:
-            self.is_running = False
-            self.logger.info("Trading bot stopped")
+            except Exception as e:
+                self.logger.error(f"Error during trading cycle: {str(e)}")
+            
+            await asyncio.sleep(1)  # 1초 대기
 
-    async def stop(self):
-        """봇 중지"""
-        self.is_running = False
+        self.logger.info("Bot stopped")

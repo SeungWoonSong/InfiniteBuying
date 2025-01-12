@@ -11,7 +11,16 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = 'http://localhost:8000';
+
+interface BotConfig {
+  is_running: boolean;
+  log_dir?: string;
+  app_key?: string;
+  app_secret?: string;
+  account_number?: string;
+  account_code?: string;
+}
 
 interface TradingConfig {
   symbol: string;
@@ -19,18 +28,16 @@ interface TradingConfig {
   first_buy_amount: number;
   pre_turn_threshold: number;
   quarter_loss_start: number;
-  is_running: boolean;
+}
+
+interface Config {
+  bot_config: BotConfig;
+  trading_config: TradingConfig;
 }
 
 export const ConfigForm: React.FC = () => {
-  const [config, setConfig] = useState<TradingConfig>({
-    symbol: '',
-    total_divisions: 40,
-    first_buy_amount: 1,
-    pre_turn_threshold: 20,
-    quarter_loss_start: 39,
-    is_running: false,
-  });
+  const [config, setConfig] = useState<Config | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchConfig();
@@ -39,21 +46,30 @@ export const ConfigForm: React.FC = () => {
   const fetchConfig = async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/config`);
-      setConfig(response.data);
+      if (response.data) {
+        setConfig(response.data);
+        setError(null);
+      } else {
+        setConfig(null);
+        setError('Invalid response format');
+      }
     } catch (error) {
       console.error('Failed to fetch config:', error);
+      setConfig(null);
+      setError(error instanceof Error ? error.message : 'Failed to fetch config');
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!config) return;
+
     try {
-      const { is_running, ...configUpdate } = config;
-      await axios.post(`${API_BASE_URL}/config`, configUpdate);
+      await axios.post(`${API_BASE_URL}/config`, config);
       alert('Configuration updated successfully!');
     } catch (error) {
       console.error('Failed to update config:', error);
-      alert('Failed to update configuration');
+      alert('Failed to update configuration. Please try again.');
     }
   };
 
@@ -61,8 +77,10 @@ export const ConfigForm: React.FC = () => {
     try {
       await axios.post(`${API_BASE_URL}/config/start`);
       await fetchConfig();
+      alert('Bot started successfully!');
     } catch (error) {
       console.error('Failed to start bot:', error);
+      alert('Failed to start bot. Please try again.');
     }
   };
 
@@ -70,39 +88,82 @@ export const ConfigForm: React.FC = () => {
     try {
       await axios.post(`${API_BASE_URL}/config/stop`);
       await fetchConfig();
+      alert('Bot stopped successfully!');
     } catch (error) {
       console.error('Failed to stop bot:', error);
+      alert('Failed to stop bot. Please try again.');
     }
   };
 
   const handleResetBot = async () => {
-    try {
-      await axios.post(`${API_BASE_URL}/config/reset`);
-      await fetchConfig();
-    } catch (error) {
-      console.error('Failed to reset bot:', error);
+    if (window.confirm('Are you sure you want to reset the bot? This will clear all trading history.')) {
+      try {
+        await axios.post(`${API_BASE_URL}/config/reset`);
+        await fetchConfig();
+        alert('Bot reset successfully!');
+      } catch (error) {
+        console.error('Failed to reset bot:', error);
+        alert('Failed to reset bot. Please try again.');
+      }
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setConfig({ ...config, [e.target.name]: e.target.type === 'number' ? Number(e.target.value) : e.target.value });
-  };
+  if (error) {
+    return (
+      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+        <Typography color="error">Error: {error}</Typography>
+      </Paper>
+    );
+  }
+
+  if (!config) {
+    return (
+      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+        <Typography>Loading configuration...</Typography>
+      </Paper>
+    );
+  }
 
   return (
     <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
       <Typography variant="h6" gutterBottom>
-        Trading Bot Configuration
+        Bot Configuration
       </Typography>
-      <form onSubmit={handleSubmit}>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
+      <Box component="form" onSubmit={handleSubmit}>
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={config.bot_config.is_running}
+                  onChange={(e) =>
+                    setConfig({
+                      ...config,
+                      bot_config: {
+                        ...config.bot_config,
+                        is_running: e.target.checked,
+                      },
+                    })
+                  }
+                />
+              }
+              label="Bot Running"
+            />
+          </Grid>
+          <Grid item xs={12}>
             <TextField
               fullWidth
               label="Symbol"
-              name="symbol"
-              value={config.symbol}
-              onChange={handleChange}
-              required
+              value={config.trading_config.symbol}
+              onChange={(e) =>
+                setConfig({
+                  ...config,
+                  trading_config: {
+                    ...config.trading_config,
+                    symbol: e.target.value,
+                  },
+                })
+              }
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -110,10 +171,16 @@ export const ConfigForm: React.FC = () => {
               fullWidth
               type="number"
               label="Total Divisions"
-              name="total_divisions"
-              value={config.total_divisions}
-              onChange={handleChange}
-              required
+              value={config.trading_config.total_divisions}
+              onChange={(e) =>
+                setConfig({
+                  ...config,
+                  trading_config: {
+                    ...config.trading_config,
+                    total_divisions: Number(e.target.value),
+                  },
+                })
+              }
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -121,10 +188,16 @@ export const ConfigForm: React.FC = () => {
               fullWidth
               type="number"
               label="First Buy Amount"
-              name="first_buy_amount"
-              value={config.first_buy_amount}
-              onChange={handleChange}
-              required
+              value={config.trading_config.first_buy_amount}
+              onChange={(e) =>
+                setConfig({
+                  ...config,
+                  trading_config: {
+                    ...config.trading_config,
+                    first_buy_amount: Number(e.target.value),
+                  },
+                })
+              }
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -132,10 +205,16 @@ export const ConfigForm: React.FC = () => {
               fullWidth
               type="number"
               label="Pre-turn Threshold"
-              name="pre_turn_threshold"
-              value={config.pre_turn_threshold}
-              onChange={handleChange}
-              required
+              value={config.trading_config.pre_turn_threshold}
+              onChange={(e) =>
+                setConfig({
+                  ...config,
+                  trading_config: {
+                    ...config.trading_config,
+                    pre_turn_threshold: Number(e.target.value),
+                  },
+                })
+              }
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -143,52 +222,45 @@ export const ConfigForm: React.FC = () => {
               fullWidth
               type="number"
               label="Quarter Loss Start"
-              name="quarter_loss_start"
-              value={config.quarter_loss_start}
-              onChange={handleChange}
-              required
+              value={config.trading_config.quarter_loss_start}
+              onChange={(e) =>
+                setConfig({
+                  ...config,
+                  trading_config: {
+                    ...config.trading_config,
+                    quarter_loss_start: Number(e.target.value),
+                  },
+                })
+              }
             />
           </Grid>
           <Grid item xs={12}>
-            <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
               <Button
                 variant="contained"
-                color="primary"
+                color="error"
+                onClick={handleResetBot}
+              >
+                Reset Bot
+              </Button>
+              <Button
+                variant="contained"
+                color={config.bot_config.is_running ? "error" : "success"}
+                onClick={config.bot_config.is_running ? handleStopBot : handleStartBot}
+              >
+                {config.bot_config.is_running ? "Stop Bot" : "Start Bot"}
+              </Button>
+              <Button
                 type="submit"
-                disabled={config.is_running}
+                variant="contained"
+                color="primary"
               >
                 Save Configuration
               </Button>
-              {config.is_running ? (
-                <Button
-                  variant="contained"
-                  color="error"
-                  onClick={handleStopBot}
-                >
-                  Stop Bot
-                </Button>
-              ) : (
-                <>
-                  <Button
-                    variant="contained"
-                    color="success"
-                    onClick={handleStartBot}
-                  >
-                    Start Bot
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    color="warning"
-                    onClick={handleResetBot}
-                  >
-                    Reset Bot
-                  </Button>
-                </>
-              )}
             </Box>
           </Grid>
         </Grid>
-      </form>
+      </Box>
     </Paper>
   );
 };
